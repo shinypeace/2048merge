@@ -165,6 +165,10 @@ export class Game {
     ctx.restore();
   }
 
+  refreshPreview(){
+    this.drawNextPreview();
+  }
+
   spawnActiveFruit(){
     const type = this.nextFruitType;
     const t = this.catalog.getType(type);
