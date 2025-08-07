@@ -53,7 +53,17 @@ function resizeCanvas() {
   canvas.style.height = cssH + 'px';
   canvas.width = Math.round(cssW * dpr);
   canvas.height = Math.round(cssH * dpr);
+
+  // Scale next-preview canvas to DPR for crisp rendering
+  const prRect = nextPreview.getBoundingClientRect();
+  const pCssW = Math.max(48, Math.min(128, Math.round(prRect.width)));
+  nextPreview.style.width = pCssW + 'px';
+  nextPreview.style.height = pCssW + 'px';
+  nextPreview.width = Math.round(pCssW * dpr);
+  nextPreview.height = Math.round(pCssW * dpr);
+
   game.onResize({ width: canvas.width, height: canvas.height, dpr });
+  if (typeof game.refreshPreview === 'function') game.refreshPreview();
 }
 
 window.addEventListener('resize', resizeCanvas);
