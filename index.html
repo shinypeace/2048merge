@@ -1,710 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>2048 Merge Game Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#f5efe6" />
+    <title>Fruit Merge - Suika Inspired</title>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #111827;
-            color: #F9FAFB;
-            overflow: hidden;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            width: 100vw;
-        }
-        .game-wrapper {
-            position: relative;
-            background: #1F2937;
-            border-radius: 1.5rem;
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        .game-canvas {
-            background: rgba(17, 24, 39, 0.5);
-            backdrop-filter: blur(2px);
-            display: block;
-        }
-        .death-line {
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: repeating-linear-gradient(90deg, #F87171, #F87171 10px, transparent 10px, transparent 20px);
-            animation: warning-glow 2s infinite;
-            z-index: 10;
-        }
-        @keyframes warning-glow {
-            0%, 100% { box-shadow: 0 0 5px #F87171, 0 0 10px #F87171; }
-            50% { box-shadow: 0 0 15px #EF4444, 0 0 20px #EF4444; }
-        }
-        .modal-container {
-            position: fixed;
-            inset: 0;
-            z-index: 50;
-        }
-        .modal-backdrop {
-            position: absolute;
-            inset: 0;
-            background-color: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-primary {
-            background: linear-gradient(145deg, #4F46E5, #7C3AED);
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
-        }
-        .eraser-active {
-            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a2.1 2.1 0 0 0-2.97 0L7.85 14.15a0.5 0.5 0 0 0 0 .7l4.24 4.24a0.5 0.5 0 0 0 .7 0l10.58-10.58a2.1 2.1 0 0 0 0-2.97z"/><path d="m5.71 16.29-2.83 2.83a2.1 2.1 0 0 0 0 2.97l2.97 0a2.1 2.1 0 0 0 2.97-2.97L5.71 16.29z"/><path d="M16 5.5l-2.5-2.5"/></svg>'), auto !important;
-        }
-    </style>
-</head>
-<body oncontextmenu="return false;">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="app-root">
+      <canvas id="game-canvas"></canvas>
 
-    <div id="game-wrapper" class="game-wrapper">
-        <!-- Main Menu -->
-        <div id="main-menu" class="w-full h-full flex flex-col items-center justify-center text-center p-4">
-            <h1 class="text-5xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-600 mb-2">2048</h1>
-            <h2 class="text-3xl font-bold tracking-tight mb-10">MERGE PRO</h2>
-            <button id="start-game-btn" class="btn-primary text-white font-bold py-4 px-12 rounded-full text-2xl shadow-lg w-3/4 max-w-xs">
-                Начать игру
-            </button>
-            <button id="stats-btn" class="mt-4 bg-gray-700 text-white font-bold py-3 px-10 rounded-full text-lg w-3/4 max-w-xs">Статистика</button>
+      <div id="ui-layer" class="ui-layer">
+        <div id="hud" class="hud hidden">
+          <div class="hud-left">
+            <div class="score"><span id="score-label">Счёт</span><span id="score-value">0</span></div>
+            <div class="combo hidden" id="combo-indicator">x1</div>
+          </div>
+          <div class="hud-center">
+            <div class="next">
+              <span class="next-label">Следующий</span>
+              <canvas id="next-preview" width="96" height="96"></canvas>
+            </div>
+          </div>
+          <div class="hud-right">
+            <button id="pause-btn" class="btn btn-ghost" aria-label="Пауза">II</button>
+          </div>
         </div>
 
-        <!-- Game UI -->
-        <div id="game-ui" class="hidden w-full h-full flex-grow flex flex-col items-center justify-start">
-            <!-- Top Bar -->
-            <div id="game-top-bar" class="w-full p-4 flex justify-between items-center z-20">
-                <div class="flex items-center space-x-4">
-                    <button id="pause-btn" class="w-12 h-12 bg-gray-900/50 rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg>
-                    </button>
-                    <button id="eraser-btn" class="w-12 h-12 bg-gray-900/50 rounded-full flex items-center justify-center shadow-md relative active:scale-95 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a2.1 2.1 0 0 0-2.97 0L7.85 14.15a0.5 0.5 0 0 0 0 .7l4.24 4.24a0.5 0.5 0 0 0 .7 0l10.58-10.58a2.1 2.1 0 0 0 0-2.97z"/><path d="m5.71 16.29-2.83 2.83a2.1 2.1 0 0 0 0 2.97l2.97 0a2.1 2.1 0 0 0 2.97-2.97L5.71 16.29z"/><path d="M16 5.5l-2.5-2.5"/></svg>
-                        <span class="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5">ad</span>
-                    </button>
-                </div>
-                <div class="text-center">
-                    <div class="text-sm text-gray-400">СЧЕТ</div>
-                    <div id="score" class="text-3xl font-bold">0</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-sm text-gray-400">СЛЕДУЮЩИЙ</div>
-                    <div id="next-cube-preview" class="w-10 h-10 rounded-md mx-auto mt-1 flex items-center justify-center font-bold text-lg"></div>
-                </div>
-            </div>
-
-            <!-- Game Container -->
-            <div id="game-container" class="w-full flex-grow relative">
-                <div class="death-line"></div>
-                <!-- Canvas will be inserted here -->
-            </div>
+        <div id="main-menu" class="menu">
+          <div class="logo">Fruit Merge</div>
+          <div class="subtitle">Собирай, объединяй, становись лучшим</div>
+          <div class="menu-buttons">
+            <button id="play-btn" class="btn btn-primary">Играть</button>
+            <button id="rules-btn" class="btn">Правила</button>
+            <button id="stats-btn" class="btn">Статистика</button>
+            <button id="settings-btn" class="btn">Настройки</button>
+          </div>
+          <div class="footer-note">Версия 1.0</div>
         </div>
+
+        <div id="overlay" class="overlay hidden"></div>
+
+        <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+          <div class="modal-content" id="modal-content"></div>
+          <div class="modal-actions">
+            <button id="modal-close" class="btn">Закрыть</button>
+          </div>
+        </div>
+
+        <div id="pause-menu" class="menu small hidden">
+          <div class="logo small">Пауза</div>
+          <div class="menu-buttons">
+            <button id="resume-btn" class="btn btn-primary">Продолжить</button>
+            <button id="restart-btn" class="btn">Начать заново</button>
+            <button id="to-menu-btn" class="btn">Главное меню</button>
+          </div>
+        </div>
+
+        <div id="game-over" class="menu small hidden">
+          <div class="logo small">Игра окончена</div>
+          <div class="final-score">Счёт: <span id="final-score-value">0</span></div>
+          <div class="menu-buttons">
+            <button id="retry-btn" class="btn btn-primary">Ещё раз</button>
+            <button id="share-btn" class="btn">Поделиться</button>
+            <button id="go-menu-btn" class="btn">Меню</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Modals -->
-    <div id="modal-container" class="modal-container hidden">
-        <!-- Pause Modal, Game Over Modal, Stats Modal -->
-        <div id="pause-modal" class="hidden modal-backdrop">
-             <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl text-center w-11/12 max-w-xs">
-                <h2 class="text-4xl font-bold mb-6">Пауза</h2>
-                <button id="resume-btn" class="btn-primary text-white font-bold py-3 px-10 rounded-full text-xl mb-4 w-full">Продолжить</button>
-                <button id="restart-pause-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-10 rounded-full text-xl w-full mb-4">Начать заново</button>
-                <button id="menu-pause-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-10 rounded-full text-xl w-full">Главное меню</button>
-            </div>
-        </div>
-        <div id="game-over-modal" class="hidden modal-backdrop">
-            <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl text-center w-11/12 max-w-xs">
-                <h2 class="text-4xl font-bold mb-2">Игра окончена</h2>
-                <p class="text-gray-400 mb-4">Ваш результат:</p>
-                <p id="final-score" class="text-6xl font-black text-purple-400 mb-2">0</p>
-                <p class="text-gray-400 mb-6">Рекорд: <span id="game-over-highscore">0</span></p>
-                <button id="restart-game-over-btn" class="btn-primary text-white font-bold py-3 px-10 rounded-full text-xl mb-4 w-full">Играть снова</button>
-                <button id="back-to-menu-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-10 rounded-full text-xl w-full">Главное меню</button>
-            </div>
-        </div>
-        <div id="stats-modal" class="hidden modal-backdrop">
-            <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-11/12 max-w-xs text-center">
-                <h2 class="text-4xl font-bold mb-6">Статистика</h2>
-                <div class="text-left space-y-4 text-lg">
-                    <div class="flex justify-between"><span>Рекорд:</span> <span id="stats-highscore" class="font-bold">0</span></div>
-                    <div class="flex justify-between"><span>Игр сыграно:</span> <span id="stats-games-played" class="font-bold">0</span></div>
-                    <div class="flex justify-between"><span>Средний счет:</span> <span id="stats-avg-score" class="font-bold">0</span></div>
-                    <div class="flex justify-between"><span>Макс. куб:</span> <span id="stats-max-cube" class="font-bold">0</span></div>
-                </div>
-                <button id="close-stats-btn" class="mt-8 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-10 rounded-full text-xl w-full">Закрыть</button>
-            </div>
-        </div>
-    </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM ELEMENTS ---
-    const gameWrapper = document.getElementById('game-wrapper');
-    const mainMenu = document.getElementById('main-menu');
-    const gameUI = document.getElementById('game-ui');
-    const gameContainer = document.getElementById('game-container');
-    const scoreEl = document.getElementById('score');
-    const nextCubePreviewEl = document.getElementById('next-cube-preview');
-    const eraserBtn = document.getElementById('eraser-btn');
-    
-    // Modals
-    const modalContainer = document.getElementById('modal-container');
-    const pauseModal = document.getElementById('pause-modal');
-    const gameOverModal = document.getElementById('game-over-modal');
-    const statsModal = document.getElementById('stats-modal');
-    
-    // Buttons
-    const startGameBtn = document.getElementById('start-game-btn');
-    const statsBtn = document.getElementById('stats-btn');
-    const closeStatsBtn = document.getElementById('close-stats-btn');
-    const pauseBtn = document.getElementById('pause-btn');
-    const resumeBtn = document.getElementById('resume-btn');
-    const restartPauseBtn = document.getElementById('restart-pause-btn');
-    const menuPauseBtn = document.getElementById('menu-pause-btn');
-    const restartGameOverBtn = document.getElementById('restart-game-over-btn');
-    const backToMenuBtn = document.getElementById('back-to-menu-btn');
-
-    // Stats displays
-    const finalScoreEl = document.getElementById('final-score');
-    const gameOverHighscoreEl = document.getElementById('game-over-highscore');
-    const statsHighscoreEl = document.getElementById('stats-highscore');
-    const statsGamesPlayedEl = document.getElementById('stats-games-played');
-    const statsAvgScoreEl = document.getElementById('stats-avg-score');
-    const statsMaxCubeEl = document.getElementById('stats-max-cube');
-
-    // --- MATTER.JS MODULES ---
-    const { Engine, Render, World, Bodies, Body, Events, Composite, Bounds } = Matter;
-
-    // --- GAME CONFIG ---
-    let engine, render, world;
-    let currentCube = null;
-    let currentCubeValue;
-    let nextCubeValue;
-    let score = 0;
-    let isGameOver = false;
-    let isPaused = false;
-    let canDrop = true;
-    let eraserActive = false;
-    let eraserCount = 1;
-    let gameOverTimeout;
-    let animationFrameId;
-    let lastTime = 0;
-
-    const CUBE_VALUES = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
-    const CUBE_COLORS = { /* ... same as before ... */ };
-    let DEATH_LINE_Y;
-    const GRAVITY = 1.0; // Adjusted for delta time
-    const RESTITUTION = 0.3;
-    const GAME_ASPECT_RATIO = 9 / 16;
-
-    // --- RESPONSIVENESS & RESIZING ---
-    function resizeGame() {
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        
-        let newWidth, newHeight;
-
-        if (viewportWidth / viewportHeight > GAME_ASPECT_RATIO) {
-            newHeight = viewportHeight * 0.95;
-            newWidth = newHeight * GAME_ASPECT_RATIO;
-        } else {
-            newWidth = viewportWidth * 0.95;
-            newHeight = newWidth / GAME_ASPECT_RATIO;
-        }
-
-        gameWrapper.style.width = `${newWidth}px`;
-        gameWrapper.style.height = `${newHeight}px`;
-
-        if (!engine) return;
-
-        const oldWidth = render.options.width;
-        const newCanvasWidth = gameContainer.clientWidth;
-        const newCanvasHeight = gameContainer.clientHeight;
-        const scaleFactor = newCanvasWidth / oldWidth;
-
-        render.canvas.width = newCanvasWidth;
-        render.canvas.height = newCanvasHeight;
-        render.options.width = newCanvasWidth;
-        render.options.height = newCanvasHeight;
-        Bounds.update(render.bounds, { 
-            min: { x: 0, y: 0 }, 
-            max: { x: newCanvasWidth, y: newCanvasHeight } 
-        });
-
-        // Scale all bodies
-        const allBodies = Composite.allBodies(world);
-        allBodies.forEach(body => {
-            const oldPos = body.position;
-            Body.scale(body, scaleFactor, scaleFactor);
-            Body.setPosition(body, {
-                x: oldPos.x * scaleFactor,
-                y: oldPos.y * scaleFactor
-            });
-        });
-
-        // Update death line position
-        DEATH_LINE_Y = newCanvasHeight * 0.15;
-        document.querySelector('.death-line').style.top = `${DEATH_LINE_Y}px`;
-    }
-
-    // --- GAME LOOP ---
-    function gameLoop(time) {
-        if (isPaused || isGameOver) {
-            lastTime = time;
-            animationFrameId = requestAnimationFrame(gameLoop);
-            return;
-        }
-
-        const deltaTime = time - lastTime;
-        lastTime = time;
-        
-        // Use a fixed delta time for stability, but cap it
-        const optimalDelta = 1000 / 60;
-        Engine.update(engine, optimalDelta);
-
-        animationFrameId = requestAnimationFrame(gameLoop);
-    }
-
-    // --- GAME STATE ---
-    function initGame() {
-        isGameOver = false;
-        isPaused = false;
-        canDrop = true;
-        eraserActive = false;
-        eraserCount = 1;
-        score = 0;
-        updateScore(0);
-        updateEraserDisplay();
-        
-        if (engine) {
-            World.clear(engine.world);
-            Engine.clear(engine);
-            if(render && render.canvas) render.canvas.remove();
-        }
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-        }
-
-        engine = Engine.create({ gravity: { y: GRAVITY, scale: 0.001 } });
-        world = engine.world;
-        
-        const containerWidth = gameContainer.clientWidth;
-        const containerHeight = gameContainer.clientHeight;
-        DEATH_LINE_Y = containerHeight * 0.15;
-        document.querySelector('.death-line').style.top = `${DEATH_LINE_Y}px`;
-
-        render = Render.create({
-            element: gameContainer,
-            engine: engine,
-            options: { width: containerWidth, height: containerHeight, wireframes: false, background: 'transparent' }
-        });
-        render.canvas.classList.add('game-canvas');
-        
-        const wallOptions = { isStatic: true, render: { visible: false } };
-        World.add(world, [
-            Bodies.rectangle(containerWidth / 2, containerHeight + 25, containerWidth, 50, wallOptions),
-            Bodies.rectangle(-1, containerHeight / 2, 2, containerHeight, wallOptions),
-            Bodies.rectangle(containerWidth + 1, containerHeight / 2, 2, containerHeight, wallOptions)
-        ]);
-        
-        Render.run(render);
-        
-        nextCubeValue = generateNextCubeValue();
-        prepareNextCube();
-        
-        addGameEventListeners();
-        lastTime = performance.now();
-        gameLoop(lastTime);
-    }
-
-    function startGame() {
-        mainMenu.classList.add('hidden');
-        gameUI.classList.remove('hidden');
-        hideAllModals();
-        initGame();
-    }
-
-    function showMainMenu() {
-        gameUI.classList.add('hidden');
-        mainMenu.classList.remove('hidden');
-        hideAllModals();
-        updateStatsDisplay();
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-        }
-    }
-
-    function pauseGame() {
-        if(isGameOver) return;
-        isPaused = true;
-        showModal(pauseModal);
-    }
-
-    function resumeGame() {
-        isPaused = false;
-        hideAllModals();
-    }
-
-    function triggerGameOver() {
-        if (isGameOver) return;
-        isGameOver = true;
-        
-        updateStatisticsOnGameOver();
-        updateStatsDisplay();
-        
-        finalScoreEl.textContent = score;
-        showModal(gameOverModal);
-        removeGameEventListeners();
-    }
-
-    // --- CUBE LOGIC ---
-    function getCubeSize(value) {
-        const baseSize = gameContainer.clientWidth / 9; // Adjusted for better feel
-        const index = CUBE_VALUES.indexOf(value);
-        return baseSize + (index * 1.5);
-    }
-
-    function createCubeTexture(value, size) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        // No DPR scaling, use direct size to match physics body
-        canvas.width = size;
-        canvas.height = size;
-        
-        const colorMap = {2:'#38bdf8',4:'#34d399',8:'#fbbf24',16:'#fb923c',32:'#ef4444',64:'#d946ef',128:'#ec4899',256:'#f43f5e',512:'#6366f1',1024:'#8b5cf6',2048:'#fde047', 4096: '#e5e7eb'};
-        
-        const cornerRadius = size * 0.1;
-        ctx.beginPath();
-        ctx.moveTo(cornerRadius, 0);
-        ctx.lineTo(size - cornerRadius, 0);
-        ctx.quadraticCurveTo(size, 0, size, cornerRadius);
-        ctx.lineTo(size, size - cornerRadius);
-        ctx.quadraticCurveTo(size, size, size - cornerRadius, size);
-        ctx.lineTo(cornerRadius, size);
-        ctx.quadraticCurveTo(0, size, 0, size - cornerRadius);
-        ctx.lineTo(0, cornerRadius);
-        ctx.quadraticCurveTo(0, 0, cornerRadius, 0);
-        ctx.closePath();
-        ctx.fillStyle = colorMap[value] || '#ffffff';
-        ctx.fill();
-
-        ctx.fillStyle = (value >= 2048) ? '#000000' : '#FFFFFF';
-        ctx.font = `900 ${size * 0.5}px Poppins`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(value, size / 2, size / 2 + 1);
-
-        return canvas.toDataURL();
-    }
-    
-    function prepareNextCube() {
-        if(isGameOver) return;
-        
-        currentCubeValue = nextCubeValue;
-        nextCubeValue = generateNextCubeValue();
-        updateNextCubePreview();
-
-        const size = getCubeSize(currentCubeValue);
-        
-        currentCube = Bodies.rectangle(
-            render.options.width / 2,
-            DEATH_LINE_Y / 2,
-            size, size, // Physics body size
-            {
-                isStatic: true,
-                label: `cube-${currentCubeValue}`,
-                chamfer: { radius: size * 0.1 }, // Rounded physics body
-                friction: 0.4,
-                restitution: RESTITUTION,
-                render: {
-                    sprite: {
-                        texture: createCubeTexture(currentCubeValue, size), // Texture size matches physics
-                        xScale: 1, yScale: 1
-                    }
-                }
-            }
-        );
-        World.add(world, currentCube);
-        canDrop = true;
-    }
-
-    function activateEraser(e) {
-        if (eraserCount <= 0) return;
-        const bounds = gameContainer.getBoundingClientRect();
-        const mousePosition = {
-            x: (e.clientX || e.touches[0].clientX) - bounds.left,
-            y: (e.clientY || e.touches[0].clientY) - bounds.top
-        };
-        const bodies = Composite.allBodies(world);
-        const clickedCubes = bodies.filter(body => 
-            body.label.startsWith('cube-') && !body.isStatic && Bounds.contains(body.bounds, mousePosition)
-        );
-        if (clickedCubes.length > 0) {
-            World.remove(world, clickedCubes[0]);
-            eraserCount--;
-            updateEraserDisplay();
-            toggleEraser(); // Deactivate eraser UI
-            // If the current droppable cube was erased, prepare a new one.
-            if (!currentCube) {
-                setTimeout(() => prepareNextCube(), 200);
-            }
-        }
-    }
-    
-    // --- EVENT LISTENERS & RENDERING ---
-    function drawTrajectory() {
-        if (!currentCube || isPaused || isGameOver || eraserActive || !canDrop) return;
-        const ctx = render.context;
-        const size = getCubeSize(currentCubeValue);
-        ctx.save();
-        const gradient = ctx.createLinearGradient(currentCube.position.x, currentCube.position.y, currentCube.position.x, render.options.height);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(currentCube.position.x - size/2, currentCube.position.y + size/2, size, render.options.height);
-        ctx.restore();
-    }
-
-    // --- BUTTON EVENT LISTENERS ---
-    const restartFn = () => {
-        hideAllModals();
-        startGame();
-    };
-    
-    // --- INITIALIZE ---
-    window.addEventListener('resize', resizeGame);
-    // Initial setup
-    resizeGame();
-    showMainMenu();
-
-    // All other functions (handleCollisions, checkGameOver, etc.) and event listeners
-    // are attached inside initGame() or are called from there.
-    // The following are stubs for functions defined elsewhere but needed for context.
-    function hideAllModals() {
-        modalContainer.classList.add('hidden');
-        [pauseModal, gameOverModal, statsModal].forEach(m => m.classList.add('hidden'));
-    }
-    function showModal(modalElement) {
-        modalContainer.classList.remove('hidden');
-        modalElement.classList.remove('hidden');
-    }
-    function updateStatsDisplay() { /* ... */ }
-    function updateStatisticsOnGameOver() { /* ... */ }
-    function updateEraserDisplay() { /* ... */ }
-    function updateScore(points) { scoreEl.textContent = (score += points); }
-    function updateNextCubePreview() { /* ... */ }
-    function generateNextCubeValue() { const v = [2,4,8,16]; return v[Math.floor(Math.random() * v.length)]; }
-    function handleCollisions(event) { /* ... */ }
-    function createSplash(x, y, colorClass) { /* ... */ }
-    function checkGameOver() { /* ... */ }
-    function toggleEraser() {
-        if (eraserCount <= 0 || isPaused || isGameOver) return;
-        eraserActive = !eraserActive;
-        gameContainer.classList.toggle('eraser-active', eraserActive);
-        eraserBtn.classList.toggle('ring-2', eraserActive);
-        eraserBtn.classList.toggle('ring-red-500', eraserActive);
-    }
-    function handlePointerMove(e) {
-        if (!currentCube || isPaused || isGameOver || eraserActive || !canDrop) return;
-        const bounds = gameContainer.getBoundingClientRect();
-        let x = (e.clientX || e.touches[0].clientX) - bounds.left;
-        const size = getCubeSize(currentCubeValue);
-        x = Math.max(size / 2, Math.min(x, render.options.width - size / 2));
-        Body.setPosition(currentCube, { x: x, y: currentCube.position.y });
-    }
-    function handlePointerEnd(e) {
-        if (eraserActive) {
-            activateEraser(e);
-            return;
-        }
-        if (!currentCube || isPaused || isGameOver || !canDrop) return;
-        dropCube(currentCube.position.x);
-    }
-    function dropCube(x) {
-        if (!currentCube || isPaused || isGameOver || !canDrop) return;
-        canDrop = false;
-        Body.setStatic(currentCube, false);
-        Body.setPosition(currentCube, { x: x, y: DEATH_LINE_Y / 2 });
-        currentCube = null;
-        setTimeout(() => prepareNextCube(), 600);
-    }
-    function addGameEventListeners() {
-        gameContainer.addEventListener('mousemove', handlePointerMove);
-        gameContainer.addEventListener('touchmove', handlePointerMove, { passive: true });
-        gameContainer.addEventListener('mouseup', handlePointerEnd);
-        gameContainer.addEventListener('touchend', handlePointerEnd);
-        Events.on(engine, 'collisionStart', handleCollisions);
-        Events.on(render, 'afterRender', drawTrajectory);
-    }
-    function removeGameEventListeners() {
-        gameContainer.removeEventListener('mousemove', handlePointerMove);
-        gameContainer.removeEventListener('touchmove', handlePointerMove);
-        gameContainer.removeEventListener('mouseup', handlePointerEnd);
-        gameContainer.removeEventListener('touchend', handlePointerEnd);
-        if (engine) Events.off(engine, 'collisionStart');
-        if (render) Events.off(render, 'afterRender');
-    }
-    
-    // Re-implementing logic from previous steps
-    const fullLogic = {
-        updateStatsDisplay: () => {
-            let gamesPlayed = parseInt(localStorage.getItem('stats_gamesPlayed') || '0');
-            let totalScore = parseInt(localStorage.getItem('stats_totalScore') || '0');
-            let highscore = parseInt(localStorage.getItem('stats_highscore') || '0');
-            let maxCube = parseInt(localStorage.getItem('stats_maxCube') || '0');
-            let avgScore = gamesPlayed > 0 ? Math.round(totalScore / gamesPlayed) : 0;
-            gameOverHighscoreEl.textContent = highscore;
-            statsHighscoreEl.textContent = highscore;
-            statsGamesPlayedEl.textContent = gamesPlayed;
-            statsAvgScoreEl.textContent = avgScore;
-            statsMaxCubeEl.textContent = maxCube > 0 ? maxCube : '-';
-        },
-        updateStatisticsOnGameOver: () => {
-            let gamesPlayed = parseInt(localStorage.getItem('stats_gamesPlayed') || '0');
-            let totalScore = parseInt(localStorage.getItem('stats_totalScore') || '0');
-            let highscore = parseInt(localStorage.getItem('stats_highscore') || '0');
-            let maxCube = parseInt(localStorage.getItem('stats_maxCube') || '0');
-            gamesPlayed++;
-            totalScore += score;
-            if (score > highscore) highscore = score;
-            const currentMaxCube = (world ? Composite.allBodies(world) : [])
-                .filter(b => b.label && b.label.startsWith('cube-'))
-                .map(b => parseInt(b.label.split('-')[1]))
-                .reduce((max, val) => Math.max(max, val), 0);
-            if (currentMaxCube > maxCube) maxCube = currentMaxCube;
-            localStorage.setItem('stats_gamesPlayed', gamesPlayed);
-            localStorage.setItem('stats_totalScore', totalScore);
-            localStorage.setItem('stats_highscore', highscore);
-            localStorage.setItem('stats_maxCube', maxCube);
-        },
-        updateEraserDisplay: () => {
-            eraserBtn.disabled = eraserCount <= 0;
-            eraserBtn.classList.toggle('opacity-50', eraserCount <= 0);
-        },
-        updateNextCubePreview: () => {
-            const colorClass = CUBE_COLORS[nextCubeValue] || 'bg-gray-200';
-            nextCubePreviewEl.className = `w-10 h-10 rounded-md mx-auto mt-1 flex items-center justify-center font-bold text-lg ${colorClass}`;
-            nextCubePreviewEl.textContent = nextCubeValue;
-        },
-        handleCollisions: (event) => {
-            if(isGameOver) return;
-            let toAdd = [];
-            let toRemove = new Set();
-            event.pairs.forEach(pair => {
-                const { bodyA, bodyB } = pair;
-                if (toRemove.has(bodyA) || toRemove.has(bodyB) || !bodyA.label || !bodyB.label) return;
-                if (bodyA.label.startsWith('cube-') && bodyB.label.startsWith('cube-')) {
-                    const valueA = parseInt(bodyA.label.split('-')[1]);
-                    const valueB = parseInt(bodyB.label.split('-')[1]);
-                    if (valueA === valueB) {
-                        const nextValue = valueA * 2;
-                        if (!CUBE_VALUES.includes(nextValue)) return;
-                        const collisionPoint = pair.collision.supports[0] || pair.bodyA.position;
-                        const newPos = { x: collisionPoint.x, y: collisionPoint.y };
-                        toRemove.add(bodyA); toRemove.add(bodyB);
-                        toAdd.push({ value: nextValue, position: newPos });
-                        updateScore(valueA);
-                        fullLogic.createSplash(newPos.x, newPos.y, CUBE_COLORS[nextValue]);
-                    }
-                }
-            });
-            if (toRemove.size > 0) {
-                World.remove(world, Array.from(toRemove));
-                toAdd.forEach(item => {
-                    const newSize = getCubeSize(item.value);
-                    const newCube = Bodies.rectangle(item.position.x, item.position.y, newSize, newSize, {
-                        label: `cube-${item.value}`, chamfer: { radius: newSize * 0.1 }, friction: 0.4, restitution: RESTITUTION,
-                        render: { sprite: { texture: createCubeTexture(item.value, newSize) } }
-                    });
-                    Body.scale(newCube, 1.2, 1.2);
-                    setTimeout(() => Body.scale(newCube, 1/1.2, 1/1.2), 50);
-                    World.add(world, newCube);
-                });
-            }
-        },
-        createSplash: (x, y, colorClass) => {
-            const colorMap = {2:'#38bdf8',4:'#34d399',8:'#fbbf24',16:'#fb923c',32:'#ef4444',64:'#d946ef',128:'#ec4899',256:'#f43f5e',512:'#6366f1',1024:'#8b5cf6',2048:'#fde047', 4096: '#e5e7eb'};
-            const value = Object.keys(CUBE_COLORS).find(key => CUBE_COLORS[key] === colorClass);
-            const color = colorMap[value] || '#fff';
-            for (let i = 0; i < 10; i++) {
-                const particle = Bodies.circle(x, y, Math.random() * 2 + 1, {
-                    restitution: 0.8, friction: 0.9, render: { fillStyle: color }, label: 'particle'
-                });
-                Body.setVelocity(particle, { x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 });
-                World.add(world, particle);
-                setTimeout(() => World.remove(world, particle), 500 + Math.random() * 200);
-            }
-        },
-        checkGameOver: () => {
-            if (isGameOver || isPaused) return;
-            const allCubes = Composite.allBodies(world).filter(b => b.label.startsWith('cube-'));
-            let shouldBeGameOver = false;
-            for (const cube of allCubes) {
-                if (!cube.isStatic && cube.speed < 0.1 && cube.angularSpeed < 0.1 && cube.bounds.min.y < DEATH_LINE_Y) {
-                     shouldBeGameOver = true; break;
-                }
-            }
-            if (shouldBeGameOver) {
-                if (!gameOverTimeout) {
-                    gameOverTimeout = setTimeout(() => {
-                        const cubesAfterDelay = Composite.allBodies(world).filter(b => b.label.startsWith('cube-'));
-                        for (const cube of cubesAfterDelay) {
-                            if (!cube.isStatic && cube.speed < 0.1 && cube.angularSpeed < 0.1 && cube.bounds.min.y < DEATH_LINE_Y) {
-                                triggerGameOver(); break;
-                            }
-                        }
-                        gameOverTimeout = null;
-                    }, 800);
-                }
-            } else {
-                if (gameOverTimeout) { clearTimeout(gameOverTimeout); gameOverTimeout = null; }
-            }
-        }
-    };
-    Object.assign(window, fullLogic); // Make functions available globally for event handlers
-    updateStatsDisplay = fullLogic.updateStatsDisplay;
-    updateStatisticsOnGameOver = fullLogic.updateStatisticsOnGameOver;
-    updateEraserDisplay = fullLogic.updateEraserDisplay;
-    updateNextCubePreview = fullLogic.updateNextCubePreview;
-    handleCollisions = fullLogic.handleCollisions;
-    checkGameOver = fullLogic.checkGameOver;
-
-    // Final Button Listeners
-    startGameBtn.addEventListener('click', startGame);
-    statsBtn.addEventListener('click', () => showModal(statsModal));
-    closeStatsBtn.addEventListener('click', () => hideAllModals());
-    pauseBtn.addEventListener('click', pauseGame);
-    resumeBtn.addEventListener('click', resumeGame);
-    menuPauseBtn.addEventListener('click', showMainMenu);
-    eraserBtn.addEventListener('click', toggleEraser);
-    restartPauseBtn.addEventListener('click', restartFn);
-    restartGameOverBtn.addEventListener('click', restartFn);
-    backToMenuBtn.addEventListener('click', showMainMenu);
-});
-</script>
-
-</body>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>
 
